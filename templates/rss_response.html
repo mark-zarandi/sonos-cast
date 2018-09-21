@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<title>Sonos Podcast Controller</title>
+  </head>
+
+  <body>
+  	<h2>You entered {{feed_address}}.</h2> <br><br>
+
+   <form action="/add_podcast" method="post">
+
+  	  		Title: <input type="text" value="{{rss_cast_title}}" name="title_final"></input> <br>
+  	  		Description: <input type="text" value="{{rss_cast_desc}}" name="cast_desc"></input><br>
+  	  		
+
+  	  		<input type="text" value="{{feed_address}}" name="RSS_url_final" ></input> <br>
+
+
+  	  		<input type="submit" name="submitbutton" value="Yes">
+          <input type="submit" name="submitbutton" value="No">
+	</form>
+      <br><br>
+  </body>
+  </html>
