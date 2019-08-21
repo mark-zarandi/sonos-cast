@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<title>Sonos Podcast Controller</title>
+  </head>
+
+  <body>
+
+  <table>
+  <tr>
+  <ul class=entries>
+  {% for ep in ep_list %}
+    <tr><th><h2><a href="/episodes/{{ep.pod_id}}/{{ep.id}}">{{ep.title}}</h2></a></th><th>{{ep.listened}}</th></tr>
+
+  {% else %}
+    <li><em>woa</em>
+  {% endfor %}
+  </ul>
+  </body>
+   </tr>
+</table>
+  </html>

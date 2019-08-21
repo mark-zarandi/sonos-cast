@@ -5,9 +5,10 @@
   </head>
 
   <body>
+  <a href="/add_new">get it</a>
   <ul class=entries>
-  {% for pod in podcast_writ %}
-    <li><h2>{{ pod.title }}</h2>
+  {% for pod in podcast_write %}
+    <li><a href='/episodes/{{pod.id}}'><h2>{{ pod.title }}</h2></a>
   {% else %}
     <li><em>Unbelievable.  No entries here so far</em>
   {% endfor %}

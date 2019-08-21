@@ -1,18 +1,12 @@
 from flask_sqlalchemy import SQLAlchemy
-
-db = None
+from flask import Flask, request, flash, url_for, redirect, render_template
+app = Flask(__name__)
+db = SQLAlchemy(app)
 
 def init_db(app):
 	global db
-	db = SQLAlchemy(app)
 	
-	from models import pod
-    	print 'Recreating DB.'
-    	db.create_all()
-    	print 'All done.'
-
-def clear_db(app):
-	global db
-	db = SQLAlchemy(app)
-	db.reflect()
-	db.clear_all()
+	db.init_app(app)
+	db.create_all()
+	db.session.commit()
+	print 'All done.'
