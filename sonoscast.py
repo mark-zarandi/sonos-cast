@@ -10,7 +10,7 @@ from soco import SoCo
 import random
 import pytz
 import time
-
+from flask_bootstrap import Bootstrap
 import sys
 
 app = Flask(__name__)
@@ -53,7 +53,7 @@ def add_podcast():
 
 @app.route('/')  
 def show_all():
-    return render_template('show_all.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
+    return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 
 #NOTE: Restrict with print len(d['entries']) also see feed.modified or in this case d.modified
@@ -62,7 +62,7 @@ def episodes(pod_id):
     ep_list = episode.query.filter_by(pod_id=pod_id).order_by(episode.pub_date.desc()).all()
     #replace this with a query.
     
-    return render_template('episodes.html', ep_list=ep_list)
+    return render_template('app.html', ep_list=ep_list,podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 @app.route('/episodes/<pod_id>/<ep_id>')
 #make sure to set l_date (listen date)
@@ -198,5 +198,5 @@ if __name__ == "__main__":
     #start_over()
     db.create_all()
     
+    bootstrap = Bootstrap(app)
     app.run()
-
