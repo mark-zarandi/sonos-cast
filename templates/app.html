@@ -19,7 +19,14 @@
     
   </head>
   <body>
-{% block navbar %}
+    {% block scripts %}
+
+
+<script src="{{url_for('.static', filename='jquery-3.4.1.slim.min.js')}}"></script>
+  <script src="{{url_for('.static', filename='popper.min.js')}}"></script>
+  <script src="{{url_for('.static', filename='bootstrap.min.js')}}"></script>
+ {% endblock %}
+<!--{% block navbar %}
   <div class="navbar-dark text-white">
     <div class="container">
       <nav class="navbar px-0 navbar-expand-lg navbar-dark">
@@ -38,23 +45,11 @@
     </div>
   </div>
 
-{% endblock %}
+{% endblock %}-->
 
 {% block content %}
 <div class="container py-0 mb5">
-<font color='white'><pre>
-      ___           ___           ___           ___           ___                    ___           ___           ___           ___
-     /\  \         /\  \         /\__\         /\  \         /\  \                  /\  \         /\  \         /\  \         /\  \
-    /::\  \       /::\  \       /::|  |       /::\  \       /::\  \                /::\  \       /::\  \       /::\  \        \:\  \
-   /:/\ \  \     /:/\:\  \     /:|:|  |      /:/\:\  \     /:/\ \  \              /:/\:\  \     /:/\:\  \     /:/\ \  \        \:\  \
-  _\:\~\ \  \   /:/  \:\  \   /:/|:|  |__   /:/  \:\  \   _\:\~\ \  \            /:/  \:\  \   /::\~\:\  \   _\:\~\ \  \       /::\  \
- /\ \:\ \ \__\ /:/__/ \:\__\ /:/ |:| /\__\ /:/__/ \:\__\ /\ \:\ \ \__\          /:/__/ \:\__\ /:/\:\ \:\__\ /\ \:\ \ \__\     /:/\:\__\
- \:\ \:\ \/__/ \:\  \ /:/  / \/__|:|/:/  / \:\  \ /:/  / \:\ \:\ \/__/          \:\  \  \/__/ \/__\:\/:/  / \:\ \:\ \/__/    /:/  \/__/
-  \:\ \:\__\    \:\  /:/  /      |:/:/  /   \:\  /:/  /   \:\ \:\__\             \:\  \            \::/  /   \:\ \:\__\     /:/  /
-   \:\/:/  /     \:\/:/  /       |::/  /     \:\/:/  /     \:\/:/  /              \:\  \           /:/  /     \:\/:/  /     \/__/
-    \::/  /       \::/  /        /:/  /       \::/  /       \::/  /                \:\__\         /:/  /       \::/  /
-     \/__/         \/__/         \/__/         \/__/         \/__/                  \/__/         \/__/         \/__/
-</pre></font>
+
 
 
   <div class="row">
@@ -64,52 +59,104 @@
         </form>
 
         <ul class='list-group'>
-          <li class="list-group-item list-group-item-secondary"> <h1 class="display-4">Dashboard</h1></li></ul>
+          <li class="list-group-item list-group-item-secondary"> <h1 class="display-4">SonosCast</h1></li></ul>
     <div class="d-flex flex-row">
       <div class="p-0">
         <div class="list-group">
           {% for pod in podcast_write %}
-          <a href='/episodes/{{pod.id}}' class="list-group-item list-group-item-action list-group-item-light">{{ pod.title }}</a>
+          <a href='/episodes/{{pod.id}}' class="list-group-item list-group-item-action list-group-item-light">{{pod.disp_title}}</a>
            {% endfor %}
         </div>
       </div>
       <div class="p-0 align-self-stretch">
+
         <div class="list-group">
           {% for pod in podcast_write %}
-          <a href='/episodes/{{pod.id}}' class="list-group-item list-group-item-action list-group-item-light"><i class="fas fa-cog"></i></a>
+          <a href='/settings/{{pod.id}}' class="list-group-item list-group-item-action list-group-item-light"><i class="fas fa-cog"></i></a>
            {% endfor %}
         </div>
+
+
       </div>
     </div>
         <br>
-     <button type="button" class="btn btn-outline-danger btn-block" data-toggle="modal" data-target="#exampleModal">
-  <i class="fas fa-plus-square"></i> Add Podcast
+<button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#rssSubmitModal">
+  Add Podcast
 </button>
     </div>
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<!-- adding rss: 2 modals, one to submit, one for errors or add -->
+<div class="modal fade" id="rssSubmitModal" role="dialog" aria-labelledby="rssSubmitModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Enter the RSS address for your podcast.</h5>
+        <h5 class="modal-title" id="rssSubmitModalLabel">Enter the RSS address for your podcast.</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        ...
+    <form action="/find_rss" method="post">
+
+
+      <input type="text" name="RSS_url"></input>
+
+
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">OK</button>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
       </div>
     </div>
   </div>
 </div>
-    <div class="col-md-9">
+
+<div class="modal" id="rssResultModal" role="dialog" aria-labelledby="rssResultModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        {%if rss_err == true %}
+        <h5 class="modal-title" id="rssResultModalLabel">Error</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        That's not a podcast, or maybe you're not connected to the internet.
+      </div>
+      <form action="/" method="get">
+      {% else %}
+              <h5 class="modal-title" id="rssResultModalLabel">Adding {{rss_cast_title}}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <form action="/add_podcast" method="post">
+        Looks good. 
+        <input type='hidden' name='RSS_url_final' value = {{feed_address}}>
+        <input type='hidden' name='title_final' value={{rss_cast_title}}>
+
+      </div>
+      {% endif %}
+      <div class="modal-footer">
+
+        <button type="submit" class="btn btn-primary">OK</button>
+      </form>
+ 
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="col-md-9">
 
      
 
-  <table class="table">
+
+    {% if settings_cond is not defined %}
+      <table class="table">
   <thead class="thead-dark">
     <tr>
       <th scope="col">#</th>
@@ -135,31 +182,38 @@
           Delete</a>
       </td>
     </tr>
-      {% else %}
-
-      <br>
       {% endfor %}
-    
-  
+
   </tbody>
 </table>
+      {% else %}
+<div class="custom-control custom-checkbox">
+  <input type="checkbox" class="custom-control-input" id="customCheck1">
+  <label class="custom-control-label" for="customCheck1">Check this custom checkbox</label>
+</div>
+      {% endif %}
+      <br>
+    
+    
+
 
     </div>
   </div>
 
 </div>
+
 {% endblock %}
 
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-
-  {% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
- {% endblock %}
+{% if modal_cond is defined %}
+<script type="text/javascript">
+    $(document).ready($("#rssResultModal").modal('show'));
+</script>
+{% endif %}
   </body>
+
 
 
 </html>

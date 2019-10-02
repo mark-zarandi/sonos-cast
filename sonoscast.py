@@ -12,7 +12,16 @@ import pytz
 import time
 from flask_bootstrap import Bootstrap
 import sys
+import ast
 
+def left(s, amount):
+    return s[:amount]
+
+def right(s, amount):
+    return s[-amount:]
+
+def mid(s, offset, amount):
+    return s[offset:offset+amount]
 app = Flask(__name__)
 app.config.from_pyfile('pod_db.cfg')
 global db
@@ -22,22 +31,37 @@ db = SQLAlchemy(app)
 def add_new():
     return render_template('add_new.html')
 
+@app.route('/settings/<pod_id>',methods = ['GET'])
+def change_set(pod_id):
+    set_pod = pod.query.filter(pod.id == pod_id).first()
+    set_but = ast.literal_eval(set_pod.buttons)
+    set_cond = True
+    return render_template('app.html',podcast_write=pod.query.order_by(pod.id.desc()).all(),settings_pod = set_pod, set_buttons = set_but, settings_cond = set_cond)
+
 @app.route('/find_rss', methods = ['POST'])
 def find_rss():
-	submit_rss = request.form['RSS_url']
-	d = feedparser.parse(submit_rss)
-	cast_name = d['feed']['title']
-	cast_desc = d.feed.subtitle
-	return render_template('rss_response.html', feed_address=submit_rss,rss_cast_title=cast_name,rss_cast_desc=cast_desc)
+    show_modal = True
+    try:
+        submit_rss = request.form['RSS_url']
+        d = feedparser.parse(submit_rss)
+        cast_name = d['feed']['title']
+        cast_desc = d.feed.subtitle
+        show_modal = True
+    except:
+        rss_error = True
+        return render_template('app.html',modal_cond = show_modal,rss_err=rss_error)
+    return render_template('app.html', feed_address=submit_rss,rss_cast_title=cast_name,rss_cast_desc=cast_desc,modal_cond=show_modal)
 
 @app.route('/add_podcast',methods = ['POST'])
 def add_podcast():
     submit_rss_final = request.form['RSS_url_final']
     #d = feedparser.parse(submit_rss_final)
     d = feedparser.parse(submit_rss_final)
-    podfeed_new = pod(request.form['title_final'], request.form['RSS_url_final'],parser.parse(d['entries'][0]['published']))
+
+    podfeed_new = pod(d['feed']['title'], request.form['RSS_url_final'],parser.parse(d['entries'][0]['published']))
     db.session.add(podfeed_new)
     db.session.commit()
+    print(podfeed_new.disp_title)
     submit_rss_final = request.form['RSS_url_final']
     
     episode_count = len(d['entries'])
@@ -49,7 +73,17 @@ def add_podcast():
         db.session.add(entry_new)
         db.session.commit()
     return redirect(url_for('show_all'))
-   
+
+@app.route('/delete/<pod_id>')
+def del_podcast(pod_id):
+    pod.query.filter(pod.id == pod_id).delete()
+    episode.query.filter(episode.pod_id == pod_id).delete()
+    db.session.commit()
+    filler_pod = db.session.query(pod).first()
+    ep_list = episode.query.filter_by(pod_id=filler_pod.id).order_by(episode.pub_date.desc()).all()
+
+    #consider putting a modal to confirm deletion.
+    return render_template('app.html', ep_list=ep_list,podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 @app.route('/')  
 def show_all():
@@ -69,7 +103,7 @@ def episodes(pod_id):
 def play_ep(pod_id,ep_id):
     sonos = SoCo('192.168.1.136')
     play_ep = episode.query.filter_by(id=ep_id).first()
-    print play_ep.ep_location
+    print(play_ep.ep_location)
     sonos.play_uri(play_ep.ep_location)
     
 
@@ -102,18 +136,15 @@ def update_pod(pod_id):
     
     current_update = parser.parse(d['entries'][0]['published'],ignoretz=True)
    
-    #current_update = current_update.replace(tzinfo=utc)
-    #current_update = current_update.replace(tzinfo=utc)
-    print(last_update.tzinfo)
-    print(current_update.tzinfo)
+
     update_response = False
 
     if last_update < current_update:
-        print('True2')
+   
         the_pod.update_date = parser.parse(d['entries'][0]['published'],ignoretz=True)
-        print('True 3') 
+
         db.session.commit()
-        print('True 3') 
+
         update_response = True
 
         feed_titles = []
@@ -164,13 +195,24 @@ class pod(db.Model):
     add_date = db.Column(db.DateTime)
     update_date = db.Column(db.DateTime)
     addresses = db.relationship('episode',backref='pod',lazy=True)
-
+    disp_title = db.Column(db.String(100))
+    buttons = db.Column(db.String(100))
 
     def __init__(self, title, address, update_date):
         self.title = title
+
+        if len(title)>18:
+            
+            temp = title.rstrip('\n')
+            self.disp_title = temp[:18] + "..."
+            
+        else: 
+            self.disp_title = title
         self.address = address
         self.add_date = datetime.utcnow()
         self.update_date = update_date
+        self.buttons = "{'method':['1','2']}"
+        #use ast to interpret
 
 class episode(db.Model):
     __tablename__ = 'episodes'
@@ -195,7 +237,7 @@ class episode(db.Model):
 #########################################################
 if __name__ == "__main__":
     
-    #start_over()
+    start_over()
     db.create_all()
     
     bootstrap = Bootstrap(app)
