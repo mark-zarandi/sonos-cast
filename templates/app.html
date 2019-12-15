@@ -83,7 +83,7 @@
 <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#rssSubmitModal">
   Add Podcast
 </button>
-    </div>
+</div>
 <!-- adding rss: 2 modals, one to submit, one for errors or add -->
 <div class="modal fade" id="rssSubmitModal" role="dialog" aria-labelledby="rssSubmitModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -150,13 +150,13 @@
 </div>
 
 
-<div class="col-md-9">
+<div class="col-md-8">
 
      
 
 
     {% if settings_cond is not defined %}
-      <table class="table">
+  <table class="table">
   <thead class="thead-dark">
     <tr>
       <th scope="col">#</th>
@@ -167,8 +167,8 @@
   <tbody>
      {% for episode in ep_list %}
     <tr>
-      <th scope="row">1</th>
-      <td>
+      <th scope="row">{{episode.id|string}}</th>
+      <td width="500">
         <a href="#">
         {{episode.title}}
         </a>

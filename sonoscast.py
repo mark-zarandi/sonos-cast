@@ -8,11 +8,20 @@ from datetime import datetime
 from dateutil import parser
 from soco import SoCo
 import random
+import subprocess
 import pytz
 import time
+import hjson
+import threading
 from flask_bootstrap import Bootstrap
 import sys
 import ast
+from flask_script import Manager, Server
+from collections import OrderedDict
+import logging
+sys.path.insert(1, '/Users/heydaraliyev/Au')
+from buttons import Au
+
 
 def left(s, amount):
     return s[:amount]
@@ -22,6 +31,9 @@ def right(s, amount):
 
 def mid(s, offset, amount):
     return s[offset:offset+amount]
+
+
+
 app = Flask(__name__)
 app.config.from_pyfile('pod_db.cfg')
 global db
@@ -81,6 +93,7 @@ def del_podcast(pod_id):
     db.session.commit()
     filler_pod = db.session.query(pod).first()
     ep_list = episode.query.filter_by(pod_id=filler_pod.id).order_by(episode.pub_date.desc()).all()
+    update_pod()
 
     #consider putting a modal to confirm deletion.
     return render_template('app.html', ep_list=ep_list,podcast_write=pod.query.order_by(pod.id.desc()).all())
@@ -181,8 +194,23 @@ def update_pod(pod_id):
 def start_over():
     db.reflect()
     db.drop_all()
-
-
+@app.route('/write_hjson/')
+def update_hjson():
+    podcast_write=pod.query.order_by(pod.id.desc()).all()
+    pod_list_dict = OrderedDict()
+    for look_pod in podcast_write:
+        new_title = look_pod.title.replace(" ","_")
+        pod_list_dict.update({new_title:{'label':look_pod.title,'method':["get_recent","get_random"],'pod_id':look_pod.id}})
+    print(hjson.dumps(hjson_dict))
+    #note: auto discover room info.
+    #temp_rooms_dict = {'Rooms':
+    #{
+    #'Lib':'192.168.1.136'
+    #'Kitch':'192.168.1.145'
+    #'Master':'192.168.1.101'
+    #'Living':'192.168.1.116'
+    #}}
+    return redirect(url_for('show_all'))
 #CLASSES
 ###################################################
 
@@ -237,8 +265,11 @@ class episode(db.Model):
 #########################################################
 if __name__ == "__main__":
     
-    start_over()
+    #start_over()
     db.create_all()
     
     bootstrap = Bootstrap(app)
+    app.logger.disabled = True
+    log = logging.getLogger('werkzeug')
+    log.disabled = True
     app.run()
