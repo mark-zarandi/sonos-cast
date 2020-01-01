@@ -1,4 +1,14 @@
-{
+{Pods:{
+  My_Brother__My_Brother_And_Me:
+  {
+    label: My Brother, My Brother And Me
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 4
+  }
   The_Daily:
   {
     label: The Daily
@@ -19,7 +29,7 @@
     ]
     pod_id: 2
   }
-  "Sawbones:_A_Marital_Tour_of_Misguided_Medicine":
+  Sawbones__A_Marital_Tour_of_Misguided_Medicine:
   {
     label: Sawbones: A Marital Tour of Misguided Medicine
     method:
@@ -29,4 +39,4 @@
     ]
     pod_id: 1
   }
-}
+}}

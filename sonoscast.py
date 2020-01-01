@@ -12,6 +12,7 @@ import subprocess
 import pytz
 import time
 import hjson
+import json
 import threading
 from flask_bootstrap import Bootstrap
 import sys
@@ -19,8 +20,7 @@ import ast
 from flask_script import Manager, Server
 from collections import OrderedDict
 import logging
-sys.path.insert(1, '/Users/heydaraliyev/Au')
-from buttons import Au
+from flask_socketio import SocketIO, send, emit
 
 
 def left(s, amount):
@@ -33,11 +33,16 @@ def mid(s, offset, amount):
     return s[offset:offset+amount]
 
 
-
+#######   FLASK SETUP    #############
 app = Flask(__name__)
+app.jinja_env.lstrip_blocks = True
+app.jinja_env.trim_blocks = True
 app.config.from_pyfile('pod_db.cfg')
 global db
 db = SQLAlchemy(app)
+socketio = SocketIO(app)
+
+
 
 @app.route('/add_new',methods = ['GET'])  
 def add_new():
@@ -48,7 +53,7 @@ def change_set(pod_id):
     set_pod = pod.query.filter(pod.id == pod_id).first()
     set_but = ast.literal_eval(set_pod.buttons)
     set_cond = True
-    return render_template('app.html',podcast_write=pod.query.order_by(pod.id.desc()).all(),settings_pod = set_pod, set_buttons = set_but, settings_cond = set_cond)
+    return render_template('app.html',podcast_write=pod.query.order_by(pod.id.desc()).all(),settings_pod = set_pod, set_lines = json.loads(set_pod.disp_title), set_buttons = set_but, settings_cond = set_cond)
 
 @app.route('/find_rss', methods = ['POST'])
 def find_rss():
@@ -64,13 +69,27 @@ def find_rss():
         return render_template('app.html',modal_cond = show_modal,rss_err=rss_error)
     return render_template('app.html', feed_address=submit_rss,rss_cast_title=cast_name,rss_cast_desc=cast_desc,modal_cond=show_modal)
 
+def make_disp_title(working):
+    return_word = {}
+    working.replace(":","").replace(",","").replace("'","")
+    start_w = working.split(" ")
+    #only 2 lines
+    for i in range(2):
+        if len(start_w[i]) <= 7:
+            return_word[i] = start_w[i]
+        else:
+            return_word[i] = left(start_w[i],7)
+    return return_word
+
+
+
 @app.route('/add_podcast',methods = ['POST'])
 def add_podcast():
     submit_rss_final = request.form['RSS_url_final']
     #d = feedparser.parse(submit_rss_final)
     d = feedparser.parse(submit_rss_final)
 
-    podfeed_new = pod(d['feed']['title'], request.form['RSS_url_final'],parser.parse(d['entries'][0]['published']))
+    podfeed_new = pod(d['feed']['title'], request.form['RSS_url_final'],parser.parse(d['entries'][0]['published']),json.dumps(make_disp_title(d['feed']['title'])))
     db.session.add(podfeed_new)
     db.session.commit()
     print(podfeed_new.disp_title)
@@ -84,6 +103,7 @@ def add_podcast():
         
         db.session.add(entry_new)
         db.session.commit()
+    update_hjson()
     return redirect(url_for('show_all'))
 
 @app.route('/delete/<pod_id>')
@@ -100,6 +120,7 @@ def del_podcast(pod_id):
 
 @app.route('/')  
 def show_all():
+    socketio.emit('message', {'data': 'Connected'})
     return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 
@@ -194,14 +215,28 @@ def update_pod(pod_id):
 def start_over():
     db.reflect()
     db.drop_all()
+
+
 @app.route('/write_hjson/')
 def update_hjson():
+
+    def conc_disp(json_disp):
+        print(json_disp)
+        if len(json_disp) == 1:
+            return_word = str(json_disp['0'])
+        else:
+            return_word = str(json_disp['0']) + " " + str(json_disp['1'])
+        return return_word 
+
+
+    text_file = open("/Users/heydaraliyev/Au/buttons.hjson", "w")
     podcast_write=pod.query.order_by(pod.id.desc()).all()
     pod_list_dict = OrderedDict()
     for look_pod in podcast_write:
-        new_title = look_pod.title.replace(" ","_")
-        pod_list_dict.update({new_title:{'label':look_pod.title,'method':["get_recent","get_random"],'pod_id':look_pod.id}})
-    print(hjson.dumps(hjson_dict))
+        new_title = look_pod.title.replace(":","").replace(",","").replace(" ","_")
+        display_this = conc_disp(json.loads(look_pod.disp_title))
+        pod_list_dict.update({new_title:{'label':display_this,'method':["get_recent","get_random"],'pod_id':look_pod.id}})
+    n = text_file.write("{Pods:" + hjson.dumps(pod_list_dict)+"}")
     #note: auto discover room info.
     #temp_rooms_dict = {'Rooms':
     #{
@@ -226,19 +261,12 @@ class pod(db.Model):
     disp_title = db.Column(db.String(100))
     buttons = db.Column(db.String(100))
 
-    def __init__(self, title, address, update_date):
+    def __init__(self, title, address, update_date,disp_title):
         self.title = title
-
-        if len(title)>18:
-            
-            temp = title.rstrip('\n')
-            self.disp_title = temp[:18] + "..."
-            
-        else: 
-            self.disp_title = title
         self.address = address
         self.add_date = datetime.utcnow()
         self.update_date = update_date
+        self.disp_title = disp_title
         self.buttons = "{'method':['1','2']}"
         #use ast to interpret
 
@@ -265,11 +293,12 @@ class episode(db.Model):
 #########################################################
 if __name__ == "__main__":
     
-    #start_over()
+    start_over()
     db.create_all()
     
     bootstrap = Bootstrap(app)
-    app.logger.disabled = True
-    log = logging.getLogger('werkzeug')
-    log.disabled = True
-    app.run()
+    #app.logger.disabled = True
+    #log = logging.getLogger('werkzeug')
+    #log.disabled = True
+    socketio.run(app)
+    

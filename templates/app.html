@@ -6,12 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Sonos Cast</title>
     {% block styles %}
-  
 
     <link rel="stylesheet" href="{{url_for('.static', filename='css/all.css')}}">
     <link rel="stylesheet" href="{{url_for('.static', filename='css/bootstrap4-neon-glow.min.css')}}">
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="{{url_for('.static', filename='css/hack.css')}}">
+    
+
      {% endblock %}
 
 
@@ -64,7 +65,7 @@
       <div class="p-0">
         <div class="list-group">
           {% for pod in podcast_write %}
-          <a href='/episodes/{{pod.id}}' class="list-group-item list-group-item-action list-group-item-light">{{pod.disp_title}}</a>
+          <a href='/episodes/{{pod.id}}' class="list-group-item list-group-item-action list-group-item-light">{{pod.title[:18]}}</a>
            {% endfor %}
         </div>
       </div>
@@ -187,9 +188,26 @@
   </tbody>
 </table>
       {% else %}
-<div class="custom-control custom-checkbox">
-  <input type="checkbox" class="custom-control-input" id="customCheck1">
-  <label class="custom-control-label" for="customCheck1">Check this custom checkbox</label>
+      <div class="container py-3 mb5">
+      <div class="card mb-3 text-center bg-dark text-white">
+  <div class="card-body">
+<form>
+  <div class="form-group">
+    <label for="fix_au_button">Touchscreen Button Display</label>
+<BR>
+    <small id="help_line1" class="form-text text-muted">Line 1</small>
+    <input type="name-1" class="form-control" id="line1" aria-describedby="desc-line1"
+      placeholder={{ set_lines['0'] }} maxlength="7">
+<BR>
+    <small id="help_line2" class="form-text text-muted">Line 2</small>
+    <input type="name-2" class="form-control" id="line2" aria-describedby="desc-line2"
+      placeholder={{ set_lines['1'] }} maxlength="7">
+
+  </div>
+  <button type="submit" class="btn btn-light">Submit</button>
+</form>
+  </div>
+</div>
 </div>
       {% endif %}
       <br>
