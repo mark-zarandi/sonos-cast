@@ -20,6 +20,7 @@ import ast
 from flask_script import Manager, Server
 from collections import OrderedDict
 import logging
+from pprint import pprint
 from flask_socketio import SocketIO, send, emit
 
 
@@ -49,11 +50,37 @@ def add_new():
     return render_template('add_new.html')
 
 @app.route('/settings/<pod_id>',methods = ['GET'])
+#initiate settings view
 def change_set(pod_id):
     set_pod = pod.query.filter(pod.id == pod_id).first()
     set_but = ast.literal_eval(set_pod.buttons)
     set_cond = True
+    update_hjson()
     return render_template('app.html',podcast_write=pod.query.order_by(pod.id.desc()).all(),settings_pod = set_pod, set_lines = json.loads(set_pod.disp_title), set_buttons = set_but, settings_cond = set_cond)
+
+@app.route('/save_settings',methods = ['POST','GET'])
+#initiate settings view
+def save_set():
+    if request.method == 'POST':
+        regular = True
+        x = pod.query.get(request.form['podid'])
+        new_disp = {}
+        new_disp[0] = request.form['line1']
+        if request.form['submit'] == 'regular':
+            new_disp[1] = request.form['line2']
+        else:
+            new_disp[1] = ""
+            regular = False
+        x.disp_title = json.dumps(new_disp)
+        db.session.commit()
+        if regular:
+            update_hjson()
+            return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
+        else:
+            return change_set(request.form['podid'])
+    elif request.method == 'GET':
+        if request.args.get('look') == 'delete':
+            return del_podcast(request.args.get('podid'))
 
 @app.route('/find_rss', methods = ['POST'])
 def find_rss():
@@ -92,7 +119,6 @@ def add_podcast():
     podfeed_new = pod(d['feed']['title'], request.form['RSS_url_final'],parser.parse(d['entries'][0]['published']),json.dumps(make_disp_title(d['feed']['title'])))
     db.session.add(podfeed_new)
     db.session.commit()
-    print(podfeed_new.disp_title)
     submit_rss_final = request.form['RSS_url_final']
     
     episode_count = len(d['entries'])
@@ -112,15 +138,15 @@ def del_podcast(pod_id):
     episode.query.filter(episode.pod_id == pod_id).delete()
     db.session.commit()
     filler_pod = db.session.query(pod).first()
-    ep_list = episode.query.filter_by(pod_id=filler_pod.id).order_by(episode.pub_date.desc()).all()
-    update_pod()
-
+    if filler_pod != None:
+        ep_list = episode.query.filter_by(pod_id=filler_pod.id).order_by(episode.pub_date.desc()).all()
+        return render_template('app.html', ep_list=ep_list,podcast_write=pod.query.order_by(pod.id.desc()).all())
     #consider putting a modal to confirm deletion.
-    return render_template('app.html', ep_list=ep_list,podcast_write=pod.query.order_by(pod.id.desc()).all())
+    update_hjson()
+    return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 @app.route('/')  
 def show_all():
-    socketio.emit('message', {'data': 'Connected'})
     return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 
@@ -245,7 +271,10 @@ def update_hjson():
     #'Master':'192.168.1.101'
     #'Living':'192.168.1.116'
     #}}
+    socketio.emit('message', {'data': 'Connected'})
     return redirect(url_for('show_all'))
+
+
 #CLASSES
 ###################################################
 
@@ -293,7 +322,7 @@ class episode(db.Model):
 #########################################################
 if __name__ == "__main__":
     
-    start_over()
+    #start_over()
     db.create_all()
     
     bootstrap = Bootstrap(app)
