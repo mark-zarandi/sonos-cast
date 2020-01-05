@@ -190,24 +190,6 @@ def play_ep(pod_id,ep_id):
     play_ep = episode.query.filter_by(id=ep_id).first()
     print(play_ep.ep_location)
     sonos.play_uri(play_ep.ep_location)
-    
-
-@app.route('/random/<pod_id>/')
-def get_random(pod_id):
-    found = False
-    while not found:
-
-        random_selection = random.choice(episode.query.filter_by(pod_id=pod_id).order_by(episode.pub_date.desc()).all())
-        print(random_selection)
-    
-        if random_selection.listened == False:
-            found = True
-
-    succ_response = {"pod_id": random_selection.pod_id, "title": random_selection.title, "location": random_selection.ep_location}
-    random_selection.listened = True
-    db.session.commit()
-
-    return jsonify(succ_response)
 
 @app.route('/update/<pod_id>/')
 def update_pod(pod_id):
