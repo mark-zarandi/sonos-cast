@@ -49,6 +49,31 @@ socketio = SocketIO(app)
 def add_new():
     return render_template('add_new.html')
 
+@app.route('/recent/<pod_id>',methods = ['GET'])
+def get_recent(pod_id):
+    set_pod = pod.query.filter(pod.id == pod_id).first()
+    d = feedparser.parse(set_pod.address)
+    most_recent = d.entries[0].enclosures[0].href
+    succ_response = {"pod_id": set_pod. id, "location": most_recent}
+    return jsonify(succ_response)
+
+@app.route('/random/<pod_id>/')
+def get_random(pod_id):
+    found = False
+    while not found:
+
+        random_selection = random.choice(episode.query.filter_by(pod_id=pod_id).order_by(episode.pub_date.desc()).all())
+        print(random_selection)
+
+        if random_selection.listened == False:
+            found = True
+
+    succ_response = {"pod_id": random_selection.pod_id, "title": random_selection.title, "location": random_selection.ep_location}
+    random_selection.listened = True
+    db.session.commit()
+
+    return jsonify(succ_response)
+
 @app.route('/settings/<pod_id>',methods = ['GET'])
 #initiate settings view
 def change_set(pod_id):
@@ -329,5 +354,5 @@ if __name__ == "__main__":
     #app.logger.disabled = True
     #log = logging.getLogger('werkzeug')
     #log.disabled = True
-    socketio.run(app)
+    socketio.run(app,host="0.0.0.0")
     
