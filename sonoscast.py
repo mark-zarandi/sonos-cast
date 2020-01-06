@@ -80,7 +80,6 @@ def change_set(pod_id):
     set_pod = pod.query.filter(pod.id == pod_id).first()
     set_but = ast.literal_eval(set_pod.buttons)
     set_cond = True
-    update_hjson()
     return render_template('app.html',podcast_write=pod.query.order_by(pod.id.desc()).all(),settings_pod = set_pod, set_lines = json.loads(set_pod.disp_title), set_buttons = set_but, settings_cond = set_cond)
 
 @app.route('/save_settings',methods = ['POST','GET'])
@@ -98,8 +97,8 @@ def save_set():
             regular = False
         x.disp_title = json.dumps(new_disp)
         db.session.commit()
+        update_hjson()
         if regular:
-            update_hjson()
             return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
         else:
             return change_set(request.form['podid'])
@@ -262,7 +261,7 @@ def update_hjson():
         return return_word 
 
 
-    text_file = open("/Users/heydaraliyev/Au/buttons.hjson", "w")
+    text_file = open("../Au/buttons.hjson", "w")
     podcast_write=pod.query.order_by(pod.id.desc()).all()
     pod_list_dict = OrderedDict()
     for look_pod in podcast_write:
