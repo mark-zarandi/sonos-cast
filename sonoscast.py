@@ -173,6 +173,14 @@ def del_podcast(pod_id):
 def show_all():
     return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
 
+@app.route('/fix_disp/')
+def fix_disp_title():
+    pod_list = pod.query.order_by(pod.id.desc()).all()
+
+    for pod in pod_list:
+        pod.disp_title = json.dumps(make_disp_title(pod.title))
+        db.session.commit()
+    return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 #NOTE: Restrict with print len(d['entries']) also see feed.modified or in this case d.modified
 @app.route('/episodes/<pod_id>/')  
