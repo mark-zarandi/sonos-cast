@@ -171,6 +171,7 @@ def del_podcast(pod_id):
 
 @app.route('/')  
 def show_all():
+    socketio.emit('message', {'data': 'Connected'})
     return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 @app.route('/fix_disp/')
