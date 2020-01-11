@@ -1,0 +1,8 @@
+flask
+feedparser
+flask_sqlalchemy
+python-dateutil
+flask-bootstrap
+flask-script
+flask-socketio
+
