@@ -1,3 +1,4 @@
 *.pyc
 socketwork.py
 sonoscast.db
+/virt-sonos/
