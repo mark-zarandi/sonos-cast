@@ -7,8 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from dateutil import parser
 from soco import SoCo
+import requests
 import random
-import subprocess
 import pytz
 import time
 import hjson
@@ -22,7 +22,10 @@ from collections import OrderedDict
 import logging
 from pprint import pprint
 from flask_socketio import SocketIO, send, emit
-
+from flask_migrate import Migrate
+from apscheduler.schedulers.background import BackgroundScheduler
+from pyPodcastParser.Podcast import Podcast
+import os
 
 def left(s, amount):
     return s[:amount]
@@ -41,6 +44,7 @@ app.jinja_env.trim_blocks = True
 app.config.from_pyfile('pod_db.cfg')
 global db
 db = SQLAlchemy(app)
+migrate = Migrate(app,db)
 socketio = SocketIO(app)
 
 
@@ -109,12 +113,14 @@ def save_set():
 @app.route('/find_rss', methods = ['POST'])
 def find_rss():
     show_modal = True
+    submit_rss = request.form['RSS_url']
+    print(submit_rss)
     try:
-        submit_rss = request.form['RSS_url']
-        d = feedparser.parse(submit_rss)
-        cast_name = d['feed']['title']
-        cast_desc = d.feed.subtitle
-        show_modal = True
+        note = requests.get(submit_rss)
+        print('made it')
+        quick = Podcast(note.content)
+        cast_name = quick.title
+        cast_desc = quick.subtitle
     except:
         rss_error = True
         return render_template('app.html',modal_cond = show_modal,rss_err=rss_error)
@@ -137,23 +143,24 @@ def make_disp_title(working):
 @app.route('/add_podcast',methods = ['POST'])
 def add_podcast():
     submit_rss_final = request.form['RSS_url_final']
-    #d = feedparser.parse(submit_rss_final)
-    d = feedparser.parse(submit_rss_final)
+    note = requests.get(submit_rss_final)
+    quick = Podcast(note.content)
 
-    podfeed_new = pod(d['feed']['title'], request.form['RSS_url_final'],parser.parse(d['entries'][0]['published']),json.dumps(make_disp_title(d['feed']['title'])))
+    podfeed_new = pod(quick.title, request.form['RSS_url_final'],parser.parse(quick.items[0].published_date),json.dumps(make_disp_title(quick.title)))
     db.session.add(podfeed_new)
     db.session.commit()
     submit_rss_final = request.form['RSS_url_final']
     
-    episode_count = len(d['entries'])
+    episode_count = len(quick.items)
 
     #add error check for feeds that have 2 levels of links.
     for x in range(int(episode_count)):
-        entry_new=episode(d['entries'][x]['title'],parser.parse(d.entries[x].published),podfeed_new.id,d.entries[x].enclosures[0].href)
+        entry_new=episode(quick.items[x].title,parser.parse(quick.items[x].published_date),podfeed_new.id,quick.items[x].enclosure_url)
         
         db.session.add(entry_new)
         db.session.commit()
     update_hjson()
+    set_seq()
     return redirect(url_for('show_all'))
 
 @app.route('/delete/<pod_id>')
@@ -161,12 +168,13 @@ def del_podcast(pod_id):
     pod.query.filter(pod.id == pod_id).delete()
     episode.query.filter(episode.pod_id == pod_id).delete()
     db.session.commit()
+    update_hjson()
     filler_pod = db.session.query(pod).first()
     if filler_pod != None:
         ep_list = episode.query.filter_by(pod_id=filler_pod.id).order_by(episode.pub_date.desc()).all()
         return render_template('app.html', ep_list=ep_list,podcast_write=pod.query.order_by(pod.id.desc()).all())
     #consider putting a modal to confirm deletion.
-    update_hjson()
+    
     return render_template('app.html', podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 @app.route('/')  
@@ -190,6 +198,14 @@ def episodes(pod_id):
     #replace this with a query.
     
     return render_template('app.html', ep_list=ep_list,podcast_write=pod.query.order_by(pod.id.desc()).all())
+@app.route('/reset_seq')
+def set_seq():
+    fix_list = pod.query.order_by(pod.id.desc()).all()
+    for pod_run in fix_list:
+        if pod_run.seq_butt == None:
+            pod_run.seq_butt = pod_run.id
+    db.session.commit()
+    #return render_template('app.html',podcast_write=pod.query.order_by(pod.id.desc()).all())
 
 @app.route('/episodes/<pod_id>/<ep_id>')
 #make sure to set l_date (listen date)
@@ -257,6 +273,9 @@ def start_over():
     db.reflect()
     db.drop_all()
 
+def force_reboot():
+    socketio.emit('message', {'data': 'Connected'})
+    print('force restart: times up')
 
 @app.route('/write_hjson/')
 def update_hjson():
@@ -267,17 +286,21 @@ def update_hjson():
             return_word = str(json_disp['0'])
         else:
             return_word = str(json_disp['0']) + " " + str(json_disp['1'])
-        return return_word 
+        return return_word
 
+    if os.path.exists("../Au/buttons.hjson"):
+        os.remove("../Au/buttons.hjson")
 
-    text_file = open("../Au/buttons.hjson", "w")
+    text_file = open("../Au/buttons.hjson", "w+")
     podcast_write=pod.query.order_by(pod.id.desc()).all()
+    print(podcast_write)
     pod_list_dict = OrderedDict()
     for look_pod in podcast_write:
         new_title = look_pod.title.replace(":","").replace(",","").replace(" ","_")
         display_this = conc_disp(json.loads(look_pod.disp_title))
         pod_list_dict.update({new_title:{'label':display_this,'method':["get_recent","get_random"],'pod_id':look_pod.id}})
     n = text_file.write("{Pods:" + hjson.dumps(pod_list_dict)+"}")
+    text_file.close()
     #note: auto discover room info.
     #temp_rooms_dict = {'Rooms':
     #{
@@ -286,10 +309,13 @@ def update_hjson():
     #'Master':'192.168.1.101'
     #'Living':'192.168.1.116'
     #}}
+    time.sleep(3)
     socketio.emit('message', {'data': 'Connected'})
-    return redirect(url_for('show_all'))
 
 
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=force_reboot, trigger="interval", minutes=15)
+scheduler.start()
 #CLASSES
 ###################################################
 
@@ -304,6 +330,7 @@ class pod(db.Model):
     addresses = db.relationship('episode',backref='pod',lazy=True)
     disp_title = db.Column(db.String(100))
     buttons = db.Column(db.String(100))
+    seq_butt = db.Column(db.Integer)
 
     def __init__(self, title, address, update_date,disp_title):
         self.title = title
@@ -311,7 +338,9 @@ class pod(db.Model):
         self.add_date = datetime.utcnow()
         self.update_date = update_date
         self.disp_title = disp_title
+
         self.buttons = "{'method':['1','2']}"
+        self.seq_butt = self.id
         #use ast to interpret
 
 class episode(db.Model):
@@ -338,7 +367,7 @@ class episode(db.Model):
 if __name__ == "__main__":
     
     #start_over()
-    db.create_all()
+    #db.create_all()
     
     bootstrap = Bootstrap(app)
     #app.logger.disabled = True

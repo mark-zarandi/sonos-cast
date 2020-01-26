@@ -65,7 +65,7 @@
           
                   {% else %}
                   {% set adder = ((19 - (pod.title|length)) * " ") %}
-                  <a href='/episodes/{{pod.id}}' class="list-group-item list-group-item-action list-group-item-light">{{pod.title}}{{adder}}</a>
+                  <a href='/episodes/{{pod.id}}' class="list-group-item list-group-item-action list-group-item-light">{{pod.title}}{{pod.seq_butt}}{{adder}}</a>
                   {% endif %}
                   {% endfor %}
                 </div>
