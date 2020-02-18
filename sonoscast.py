@@ -299,7 +299,13 @@ def update_hjson():
         new_title = look_pod.title.replace(":","").replace(",","").replace(" ","_")
         display_this = conc_disp(json.loads(look_pod.disp_title))
         pod_list_dict.update({new_title:{'label':display_this,'method':["get_recent","get_random"],'pod_id':look_pod.id}})
-    n = text_file.write("{Pods:" + hjson.dumps(pod_list_dict)+"}")
+    
+    rooms = OrderedDict()
+    rooms.update({'Lib':'192.168.1.136'})
+    rooms.update({'Kitch':'192.168.1.145'})
+    rooms.update({'Lib':'192.168.1.136'})
+    rooms.update({'Lib':'192.168.1.136'})
+    n = text_file.write("{Pods:" + hjson.dumps(pod_list_dict)+"Rooms:"+hjson.dumps(rooms)+"}")
     text_file.close()
     #note: auto discover room info.
     #temp_rooms_dict = {'Rooms':
