@@ -25,6 +25,8 @@ from flask_socketio import SocketIO, send, emit
 from flask_migrate import Migrate
 from apscheduler.schedulers.background import BackgroundScheduler
 from pyPodcastParser.Podcast import Podcast
+from urllib.parse import unquote
+import re
 import os
 
 def left(s, amount):
@@ -78,6 +80,25 @@ def get_random(pod_id):
 
     return jsonify(succ_response)
 
+def parse_request(req):
+    """
+    Parses application/json request body data into a Python dictionary
+    """
+    
+
+    return payload
+
+@app.route('/webhooks', methods=['POST'])
+def jishi_recv():
+    
+    payload = request.json
+    try:
+        print(payload['data'].pop(0))
+    except KeyError:
+        print(payload['data'])
+
+    return ("", 200, None)
+
 @app.route('/settings/<pod_id>',methods = ['GET'])
 #initiate settings view
 def change_set(pod_id):
@@ -127,11 +148,14 @@ def find_rss():
     return render_template('app.html', feed_address=submit_rss,rss_cast_title=cast_name,rss_cast_desc=cast_desc,modal_cond=show_modal)
 
 def make_disp_title(working):
+    print(working)
     return_word = {}
     working.replace(":","").replace(",","").replace("'","")
+    print(working)
     start_w = working.split(" ")
+    print(start_w)
     #only 2 lines
-    for i in range(2):
+    for i in range(len(start_w)):
         if len(start_w[i]) <= 7:
             return_word[i] = start_w[i]
         else:
@@ -215,24 +239,44 @@ def play_ep(pod_id,ep_id):
     print(play_ep.ep_location)
     sonos.play_uri(play_ep.ep_location)
 
+@app.route('/update/all')
+def update_all_pods():
+
+    pod_list = pod.query.order_by(pod.id.desc()).all()
+    for pod_run in pod_list:
+
+        update_pod(pod_run.id)
+
+
+    succ_response = {"status":"OK"}
+    return jsonify(succ_response)
+
+
 @app.route('/update/<pod_id>/')
 def update_pod(pod_id):
     the_pod = pod.query.filter_by(id=pod_id).first()
     d = feedparser.parse(the_pod.address)
+
+    pod_date = requests.get(the_pod.address)
+    date_helper = Podcast(pod_date.content)
     #fix time naivete
     utc = pytz.UTC
     last_update = (the_pod.update_date) 
   
     last_update = last_update.replace(tzinfo=None)
-    
-    current_update = parser.parse(d['entries'][0]['published'],ignoretz=True)
+
+    try:
+        current_update = parser.parse(d['entries'][0]['published'],ignoretz=True)
+
+    except IndexError:
+        current_update = parser.parse((date_helper.items[0].published_date),ignoretz=True)
    
 
     update_response = False
 
     if last_update < current_update:
    
-        the_pod.update_date = parser.parse(d['entries'][0]['published'],ignoretz=True)
+        the_pod.update_date = current_update
 
         db.session.commit()
 
@@ -241,16 +285,17 @@ def update_pod(pod_id):
         feed_titles = []
 
         
-        episode_count = len(d['entries'])
-        print('True 2')   
+        episode_count = len(date_helper.items)
+  
         for x in range(int(episode_count)):
-            current_entry = d['entries'][x]['title']
+            current_entry = date_helper.items[x].title
+            print(current_entry + 'PPPP')
             feed_titles.append(current_entry)
             if_exists = db.session.query(episode.query.filter_by(title=current_entry).exists()).scalar()
             print(if_exists)
 
             if not (if_exists == True):
-                entry_new=episode(d['entries'][x]['title'],parser.parse(d.entries[x].published),the_pod.id,d.entries[x].links[0].href)
+                entry_new=episode(date_helper.items[x].title,parser.parse(date_helper.items[0].published_date),the_pod.id,date_helper.items[x].enclosure_url)
                 db.session.add(entry_new)
                 db.session.commit()
         trim_these = episode.query.filter_by(pod_id=pod_id).all()
@@ -258,20 +303,23 @@ def update_pod(pod_id):
         episode_count = (len(trim_these))
         for x in range(int(episode_count)):
             if trim_these[x].title not in feed_titles:
-                #print(trim_these[x].title)
+                print(trim_these[x].title)
                 db.session.delete(trim_these[x])
                 db.session.commit()
-                #print('deleted')
+    succ_response = {"status":"OK"}
+    return jsonify(succ_response)
 
-            #add statement to delete
-
-
-    return redirect(url_for('show_all'))
 
 
 def start_over():
     db.reflect()
     db.drop_all()
+
+@app.route('/pause')
+def force_pause():
+    socketio.emit('change',{'data':'pause'})
+    succ_response = {"state":"paused"}
+    return jsonify(succ_response)
 
 def force_reboot():
     socketio.emit('message', {'data': 'Connected'})
@@ -320,7 +368,8 @@ def update_hjson():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=force_reboot, trigger="interval", minutes=15)
+scheduler.add_job(func=force_reboot, trigger="interval", minutes=30)
+scheduler.add_job(func=force_reboot, trigger="interval", minutes=30)
 scheduler.start()
 #CLASSES
 ###################################################
