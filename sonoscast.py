@@ -351,8 +351,8 @@ def update_hjson():
     rooms = OrderedDict()
     rooms.update({'Lib':'192.168.1.136'})
     rooms.update({'Kitch':'192.168.1.145'})
-    rooms.update({'Lib':'192.168.1.136'})
-    rooms.update({'Lib':'192.168.1.136'})
+    rooms.update({'Master':'192.168.1.101'})
+    rooms.update({'Living':'192.168.1.116'})
     n = text_file.write("{Pods:" + hjson.dumps(pod_list_dict)+"Rooms:"+hjson.dumps(rooms)+"}")
     text_file.close()
     #note: auto discover room info.
