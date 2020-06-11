@@ -88,6 +88,12 @@ def parse_request(req):
 
     return payload
 
+@app.route('/restart', methods=['GET'])
+def restart_rpi():
+    print('this thing is shutting down')
+    time.sleep(15)
+    os.system("sudo reboot")
+
 @app.route('/webhooks', methods=['POST'])
 def jishi_recv():
     
@@ -369,7 +375,7 @@ def update_hjson():
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=force_reboot, trigger="interval", minutes=30)
-scheduler.add_job(func=force_reboot, trigger="interval", minutes=30)
+
 scheduler.start()
 #CLASSES
 ###################################################
