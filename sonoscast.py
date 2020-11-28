@@ -247,6 +247,7 @@ def play_ep(pod_id,ep_id):
 
 @app.route('/update/all')
 def update_all_pods():
+    print('updating, lets go')
 
     pod_list = pod.query.order_by(pod.id.desc()).all()
     for pod_run in pod_list:
@@ -254,8 +255,6 @@ def update_all_pods():
         update_pod(pod_run.id)
 
 
-    succ_response = {"status":"OK"}
-    return jsonify(succ_response)
 
 
 @app.route('/update/<pod_id>/')
@@ -295,10 +294,10 @@ def update_pod(pod_id):
   
         for x in range(int(episode_count)):
             current_entry = date_helper.items[x].title
-            print(current_entry + 'PPPP')
+            #print(current_entry + 'PPPP')
             feed_titles.append(current_entry)
             if_exists = db.session.query(episode.query.filter_by(title=current_entry).exists()).scalar()
-            print(if_exists)
+            #print(if_exists)
 
             if not (if_exists == True):
                 entry_new=episode(date_helper.items[x].title,parser.parse(date_helper.items[0].published_date),the_pod.id,date_helper.items[x].enclosure_url)
@@ -309,11 +308,10 @@ def update_pod(pod_id):
         episode_count = (len(trim_these))
         for x in range(int(episode_count)):
             if trim_these[x].title not in feed_titles:
-                print(trim_these[x].title)
+                #print(trim_these[x].title)
                 db.session.delete(trim_these[x])
                 db.session.commit()
-    succ_response = {"status":"OK"}
-    return jsonify(succ_response)
+
 
 
 
@@ -372,11 +370,12 @@ def update_hjson():
     time.sleep(3)
     socketio.emit('message', {'data': 'Connected'})
 
-
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=force_reboot, trigger="interval", minutes=30)
-
-scheduler.start()
+if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    print('sched')
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=force_reboot, trigger="cron", minute=30)
+    scheduler.add_job(func=update_all_pods,trigger="cron",hour='4',minute='10')
+    scheduler.start()
 #CLASSES
 ###################################################
 
