@@ -1,14 +1,4 @@
 {Pods:{
-  My_Brother__My_Brother_And_Me:
-  {
-    label: My Brother, My Brother And Me
-    method:
-    [
-      get_recent
-      get_random
-    ]
-    pod_id: 4
-  }
   The_Daily:
   {
     label: The Daily
@@ -17,26 +7,122 @@
       get_recent
       get_random
     ]
-    pod_id: 3
+    pod_id: 1
+    seq: 0
+  }
+  Global_News_Podcast:
+  {
+    label: BBC News
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 9
+    seq: 1
+  }
+  NBC_Meet_the_Press:
+  {
+    label: Meet Press
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 8
+    seq: 2
+  }
+  Uhh_Yeah_Dude:
+  {
+    label: Uhh Yeah
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 4
+    seq: 3
+  }
+  NPR_News_Now:
+  {
+    label: NPR News
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 5
+    seq: 4
+  }
+  Marketplace:
+  {
+    label: Market Place
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 7
+    seq: 5
+  }
+  Pod_Save_America:
+  {
+    label: Pod Save
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 10
+    seq: 6
   }
   Savage_Lovecast:
   {
-    label: Savage Lovecast
+    label: Savage Love
     method:
     [
       get_recent
       get_random
     ]
-    pod_id: 2
+    pod_id: 11
+    seq: 7
   }
-  Sawbones__A_Marital_Tour_of_Misguided_Medicine:
+  The_Chuck_ToddCast_Meet_the_Press:
   {
-    label: Sawbones: A Marital Tour of Misguided Medicine
+    label: Chuck Todd
     method:
     [
       get_recent
       get_random
     ]
-    pod_id: 1
+    pod_id: 12
+    seq: 8
   }
+  Intercepted_with_Jeremy_Scahill:
+  {
+    label: "Intrcpt "
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 15
+    seq: 9
+  }
+  Rabbit_Hole:
+  {
+    label: Rabbit Hole
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 17
+    seq: 10
+  }
+}Rooms:{
+  Lib: 192.168.1.136
+  Kitch: 192.168.1.145
+  Master: 192.168.1.101
+  Living: 192.168.1.116
 }}

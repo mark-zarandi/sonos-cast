@@ -1,0 +1,45 @@
+<!DOCTYPE html> 
+<html> 
+	<head>
+    <title>jQuery UI Sortable : Get the order of Sortable Element</title> 
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="./statuc/jquery-ui.css" />
+	<script src="./static/jquery-3.3.1.min.js"></script>
+	<script src="./static/jquery-ui.js"></script>
+    <style>
+        div.sortIt { width: 120px; background-color: #44c756; font-family: Verdana;
+            float: left; margin: 4px; text-align: center; border: medium solid #999;
+        padding: 4px; color:#eee; box-shadow:5px 5px 5px #444;}
+      
+    </style>
+    <script>
+        $(document).ready(function() {
+   $('#sortableContainer').sortable();
+   $('<br><br><div id=buttonDiv><button>Get Order of Elements</button></div>').appendTo('body');
+   $('button').button().click(function() {
+   var itemOrder = $('#sortableContainer').sortable("toArray");
+   for (var i = 0; i < itemOrder.length; i++) {
+    alert("Position: " + i + " ID: " + itemOrder[i]);
+                }
+            })
+
+        });
+    </script>
+
+</head> 
+<body>
+<table>
+
+ <tbody id="sortableContainer">
+        <tr id="Element1"><td><div id="Element1" class="sortIt">Item 1</div></td></tr>
+        <tr><td><div id="Element2" class="sortIt">Item 2</div></td></tr>
+        <tr><td><div id="Element3" class="sortIt">Item 3</div></td></tr>
+        <tr><td><div id="Element4" class="sortIt">Item 4</div></td></tr>
+
+
+</tbody>
+</table>
+  <br><br>
+  <p>The position is zero based.</p>
+</body>
+</html>

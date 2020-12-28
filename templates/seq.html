@@ -1,0 +1,58 @@
+<!DOCTYPE html> 
+<html> 
+	<head>
+
+{% block scripts %}
+    <script src="{{url_for('.static', filename='jquery-3.3.1.min.js')}}"></script>
+    <script src="{{url_for('.static', filename='jquery-ui.js')}}"></script>
+        <script>
+        $(document).ready(function() {
+   $('#sortableContainer').sortable();
+   $('<br><br><div id=buttonDiv><button>Get Order of Elements</button></div>').appendTo('body');
+   $('button').button().click(function() {
+   var itemOrder = JSON.stringify($('#sortableContainer').sortable("toArray"));
+   
+   $.post("/seq/",itemOrder,function(data) {alert(data)});
+
+   //for (var i = 0; i < itemOrder.length; i++) {
+   // alert("Position: " + i + " ID: " + itemOrder[i]);
+   // 
+   //             }
+            })
+
+        });    
+    </script>
+{% endblock %}
+
+{% block styles %}
+    <style>
+        div.sortIt { background-color: #44c756; font-family: Verdana;
+            float: left; margin: 4px; text-align: center; border: medium solid #999;
+        padding: 4px; color:#eee; box-shadow:5px 5px 5px #444;}
+      
+    </style>
+    <link rel="stylesheet" href="{{url_for('.static', filename='/jquery-ui.css')}}">
+{% endblock %}
+    <title>Sonoscast: Arrange Buttons</title> 
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    
+
+</head> 
+<body>
+
+{% block content %}
+<table>
+ <tbody id="sortableContainer">
+  {% for pod in podcast_write %}
+        <tr id="Element{{pod.id}}" class=sortIt><td><div class="sortIt">{{pod.title}}</div></td></tr>
+  {% endfor %}
+</tbody>
+</table>
+  <br><br>
+  <p>The position is zero based.</p>
+
+{% endblock %}
+</body>
+</html>

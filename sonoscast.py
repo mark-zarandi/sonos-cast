@@ -80,19 +80,20 @@ def get_random(pod_id):
 
     return jsonify(succ_response)
 
-def parse_request(req):
-    """
-    Parses application/json request body data into a Python dictionary
-    """
-    
-
-    return payload
 
 @app.route('/restart', methods=['GET'])
 def restart_rpi():
     print('this thing is shutting down')
     time.sleep(15)
     os.system("sudo reboot")
+
+@app.route("/echo", methods=['POST'])
+def echo():
+    print(request.get_data().decode('utf-8'))
+    if 'data' in request.form:
+        return "You said: " + request.data
+    else:
+        return "Nothing to say?"
 
 @app.route('/webhooks', methods=['POST'])
 def jishi_recv():
@@ -329,9 +330,28 @@ def force_reboot():
     socketio.emit('message', {'data': 'Connected'})
     print('force restart: times up')
 
+@app.route('/seq/',methods=["GET","POST"])
+def change_seq():
+    if request.method == "GET":
+        
+        succ_response = {"status": 'success'}
+        #return jsonify(succ_response)
+        return render_template('seq.html', podcast_write=pod.query.order_by(pod.seq_butt.asc()).all())
+    if request.method =="POST":
+        seq_array = str(request.get_data().decode('utf-8')).strip("[]").replace('"','').replace('Element',"")
+        seq_array = seq_array.split(",")
+        for num,x in enumerate(seq_array):
+            print(str(num) + " " + str(x))
+            set_pod = pod.query.filter(pod.id == int(x)).first()
+            set_pod.seq_butt = int(num)
+            db.session.commit()
+        update_hjson()
+        return "success"
+
+
 @app.route('/write_hjson/')
 def update_hjson():
-
+    print('updating')
     def conc_disp(json_disp):
         print(json_disp)
         if len(json_disp) == 1:
@@ -342,15 +362,18 @@ def update_hjson():
 
     if os.path.exists("../Au/buttons.hjson"):
         os.remove("../Au/buttons.hjson")
+    if os.path.exists("../sonos-cast/buttons.hjson"):
+        os.remove("../sonos-cast/buttons.hjson")
 
     text_file = open("../Au/buttons.hjson", "w+")
-    podcast_write=pod.query.order_by(pod.id.desc()).all()
+    text_file2 = open("../sonos-cast/buttons.hjson", "w+")
+    podcast_write=pod.query.order_by(pod.seq_butt.asc()).all()
     print(podcast_write)
     pod_list_dict = OrderedDict()
     for look_pod in podcast_write:
         new_title = look_pod.title.replace(":","").replace(",","").replace(" ","_")
         display_this = conc_disp(json.loads(look_pod.disp_title))
-        pod_list_dict.update({new_title:{'label':display_this,'method':["get_recent","get_random"],'pod_id':look_pod.id}})
+        pod_list_dict.update({new_title:{'label':display_this,'method':["get_recent","get_random"],'pod_id':look_pod.id,'seq':look_pod.seq_butt}})
     
     rooms = OrderedDict()
     rooms.update({'Lib':'192.168.1.136'})
@@ -359,6 +382,8 @@ def update_hjson():
     rooms.update({'Living':'192.168.1.116'})
     n = text_file.write("{Pods:" + hjson.dumps(pod_list_dict)+"Rooms:"+hjson.dumps(rooms)+"}")
     text_file.close()
+    n = text_file2.write("{Pods:" + hjson.dumps(pod_list_dict)+"Rooms:"+hjson.dumps(rooms)+"}")
+    text_file2.close()
     #note: auto discover room info.
     #temp_rooms_dict = {'Rooms':
     #{
@@ -369,6 +394,9 @@ def update_hjson():
     #}}
     time.sleep(3)
     socketio.emit('message', {'data': 'Connected'})
+    if request.method == "GET":
+        succ_response = {"status": 'success'}
+        return jsonify(succ_response)
 
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     print('sched')
@@ -401,7 +429,7 @@ class pod(db.Model):
 
         self.buttons = "{'method':['1','2']}"
         self.seq_butt = self.id
-        #use ast to interpret
+        #careful here, if ID is already a seq number yu're in trouble.
 
 class episode(db.Model):
     __tablename__ = 'episodes'
