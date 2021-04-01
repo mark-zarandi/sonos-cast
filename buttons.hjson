@@ -10,39 +10,6 @@
     pod_id: 1
     seq: 0
   }
-  Global_News_Podcast:
-  {
-    label: BBC News
-    method:
-    [
-      get_recent
-      get_random
-    ]
-    pod_id: 9
-    seq: 1
-  }
-  NBC_Meet_the_Press:
-  {
-    label: Meet Press
-    method:
-    [
-      get_recent
-      get_random
-    ]
-    pod_id: 8
-    seq: 2
-  }
-  Uhh_Yeah_Dude:
-  {
-    label: Uhh Yeah
-    method:
-    [
-      get_recent
-      get_random
-    ]
-    pod_id: 4
-    seq: 3
-  }
   NPR_News_Now:
   {
     label: NPR News
@@ -52,7 +19,7 @@
       get_random
     ]
     pod_id: 5
-    seq: 4
+    seq: 1
   }
   Marketplace:
   {
@@ -63,7 +30,51 @@
       get_random
     ]
     pod_id: 7
+    seq: 2
+  }
+  Global_News_Podcast:
+  {
+    label: BBC News
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 9
+    seq: 3
+  }
+  Uhh_Yeah_Dude:
+  {
+    label: Uhh Yeah
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 4
+    seq: 4
+  }
+  Witness_History:
+  {
+    label: Witness History
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 22
     seq: 5
+  }
+  NBC_Meet_the_Press:
+  {
+    label: Meet Press
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 8
+    seq: 6
   }
   Pod_Save_America:
   {
@@ -74,7 +85,7 @@
       get_random
     ]
     pod_id: 10
-    seq: 6
+    seq: 7
   }
   Savage_Lovecast:
   {
@@ -85,7 +96,7 @@
       get_random
     ]
     pod_id: 11
-    seq: 7
+    seq: 8
   }
   The_Chuck_ToddCast_Meet_the_Press:
   {
@@ -96,7 +107,7 @@
       get_random
     ]
     pod_id: 12
-    seq: 8
+    seq: 9
   }
   Intercepted_with_Jeremy_Scahill:
   {
@@ -107,18 +118,51 @@
       get_random
     ]
     pod_id: 15
-    seq: 9
+    seq: 10
   }
-  Rabbit_Hole:
+  My_Brother_My_Brother_And_Me:
   {
-    label: Rabbit Hole
+    label: My Brother
     method:
     [
       get_recent
       get_random
     ]
-    pod_id: 17
-    seq: 10
+    pod_id: 19
+    seq: 11
+  }
+  Deconstructed_with_Mehdi_Hasan:
+  {
+    label: Deconst with
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 23
+    seq: 12
+  }
+  The_Patdown_with_Ms._Pat:
+  {
+    label: The Patdown
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 24
+    seq: 13
+  }
+  Fresh_Air:
+  {
+    label: Fresh Air
+    method:
+    [
+      get_recent
+      get_random
+    ]
+    pod_id: 25
+    seq: 14
   }
 }Rooms:{
   Lib: 192.168.1.136
