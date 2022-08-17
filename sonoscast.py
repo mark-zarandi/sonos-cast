@@ -49,11 +49,6 @@ db = SQLAlchemy(app)
 migrate = Migrate(app,db)
 socketio = SocketIO(app)
 
-    rooms.update({'Lib':'192.168.1.146'})
-    rooms.update({'Kitch':'192.168.1.53'})
-    rooms.update({'Master':'192.168.1.110'})
-    rooms.update({'Living':'192.168.1.234'})
-
 speaker_ip = {
 
 'Lib':'192.168.1.146',
