@@ -49,7 +49,19 @@ db = SQLAlchemy(app)
 migrate = Migrate(app,db)
 socketio = SocketIO(app)
 
+    rooms.update({'Lib':'192.168.1.146'})
+    rooms.update({'Kitch':'192.168.1.53'})
+    rooms.update({'Master':'192.168.1.110'})
+    rooms.update({'Living':'192.168.1.234'})
 
+speaker_ip = {
+
+'Lib':'192.168.1.146',
+'Kitch':'192.168.1.53',
+'Master':'192.168.1.110',
+'Living':'192.168.1.234'
+
+}
 
 @app.route('/add_new',methods = ['GET'])  
 def add_new():
@@ -61,6 +73,20 @@ def get_recent(pod_id):
     d = feedparser.parse(set_pod.address)
     most_recent = d.entries[0].enclosures[0].href
     succ_response = {"pod_id": set_pod. id, "location": most_recent}
+    return jsonify(succ_response)
+
+@app.route('/recent_play/<pod_id>',methods = ['GET'])
+def get_recent(pod_id):
+    set_pod = pod.query.filter(pod.id == pod_id).first()
+    d = feedparser.parse(set_pod.address)
+    most_recent = d.entries[0].enclosures[0].href
+    succ_response = {"pod_id": set_pod. id, "location": most_recent}
+    url = 'http://0.0.0.0:5005/preset/all_rooms/'
+    r = requests.get(url)
+    play_room = (str(speaker_ip['Living']))
+    sonos = SoCo(play_room)
+    sonos.play_uri(most_recent)
+    sonos.play()
     return jsonify(succ_response)
 
 @app.route('/random/<pod_id>/')
